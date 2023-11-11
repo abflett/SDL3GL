@@ -1,9 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-// #include <SDL3/SDL_opengl.h>
-#include <SDL3/SDL_opengl.h>
-#include <gl/GL.h>
+#include <glad/glad.h>
 
 namespace ige {
 class Engine {

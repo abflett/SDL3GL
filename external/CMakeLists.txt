@@ -1,8 +1,8 @@
 add_subdirectory(sdl)
 add_subdirectory(glad)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glad/glad/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/glad/glad/cmake)
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glad/glad/include)
+# link_directories(${CMAKE_CURRENT_SOURCE_DIR}/glad/glad/cmake)
 
 add_library(external INTERFACE)
 
