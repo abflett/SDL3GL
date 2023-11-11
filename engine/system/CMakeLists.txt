@@ -1,5 +1,9 @@
-add_library(system Engine.cpp Engine.h)
+file(GLOB_RECURSE libsrc *.hpp *.cpp)
 
-target_link_libraries(system PRIVATE external)
+add_library(system ${libsrc})
 
-target_include_directories(system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(system PUBLIC external)
+
+target_include_directories(system
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+)
