@@ -11,7 +11,7 @@ const char* vertexShaderSource = R"(
 
     void main()
     {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        gl_Position = vec4(aPos.x * 0.5, aPos.y * 0.5, aPos.z, 2.0);
     }
 )";
 
@@ -22,7 +22,7 @@ const char* fragmentShaderSource = R"(
 
     void main()
     {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White color
+        FragColor = vec4(0.0, 1.0, 0.0, 1.0); // White color
     }
 )";
 
