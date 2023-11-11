@@ -27,23 +27,12 @@ Engine::Engine() {
         SDL_Quit();
     }
 
-    m_renderer = SDL_CreateRenderer(
-        m_window, NULL, SDL_RendererFlags::SDL_RENDERER_ACCELERATED);
-    if (!m_renderer) {
-        std::cerr << "Failed to create renderer: " << SDL_GetError()
-                  << std::endl;
-        SDL_DestroyWindow(m_window);
-        SDL_Quit();
-    }
-
-    auto m_glContext = SDL_GL_CreateContext(m_window);
+    m_glContext = SDL_GL_CreateContext(m_window);
     if (!m_glContext) {
         std::cerr << "Failed to create OpenGL context: " << SDL_GetError()
                   << std::endl;
-        SDL_DestroyRenderer(m_renderer);
         SDL_DestroyWindow(m_window);
         SDL_Quit();
-        // Handle OpenGL context creation failure
     }
 
     SDL_Event event;
@@ -67,16 +56,10 @@ Engine::Engine() {
         // Your rendering code here
 
         SDL_GL_SwapWindow(m_window);
-
-        // SDL_SetRenderDrawColor(m_renderer, 100, 149, 237, 255);
-        // SDL_RenderClear(m_renderer);
-        // SDL_RenderPresent(m_renderer);
     }
-
-    SDL_GL_DeleteContext(m_glContext);
 }
 Engine::~Engine() {
-    SDL_DestroyRenderer(m_renderer);
+    SDL_GL_DeleteContext(m_glContext);
     SDL_DestroyWindow(m_window);
     SDL_Quit();
 }
