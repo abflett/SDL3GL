@@ -26,42 +26,41 @@ const char* fragmentShaderSource = R"(
     }
 )";
 
-Engine::Engine() {
+Engine::Engine()
+    : m_window(SDL_CreateWindow("SDLGL Test", 800, 600,
+                                SDL_WindowFlags::SDL_WINDOW_OPENGL |
+                                    SDL_WindowFlags::SDL_WINDOW_RESIZABLE),
+               &SDL_DestroyWindow) {
     SDL_Init(SDL_INIT_EVERYTHING);
 
     std::cout << "Starting Engine..."
               << "\n";
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                        SDL_GL_CONTEXT_PROFILE_CORE);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+    //                     SDL_GL_CONTEXT_PROFILE_CORE);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError()
                   << std::endl;
     }
 
-    m_window = SDL_CreateWindow("SDLGL Test", 800, 600,
-                                SDL_WindowFlags::SDL_WINDOW_OPENGL |
-                                    SDL_WindowFlags::SDL_WINDOW_RESIZABLE);
     if (!m_window) {
         std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
         SDL_Quit();
     }
 
-    m_glContext = SDL_GL_CreateContext(m_window);
+    m_glContext = SDL_GL_CreateContext(m_window.get());
     if (!m_glContext) {
         std::cerr << "Failed to create OpenGL context: " << SDL_GetError()
                   << std::endl;
-        SDL_DestroyWindow(m_window);
         SDL_Quit();
     }
 
     if (!gladLoadGL()) {
         std::cerr << "Failed to initialize GLAD!" << std::endl;
         SDL_GL_DeleteContext(m_glContext);
-        SDL_DestroyWindow(m_window);
         SDL_Quit();
     }
 
@@ -142,6 +141,8 @@ Engine::Engine() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    std::cout << glGetString(GL_VERSION) << "\n";
+
     SDL_Event event;
     bool m_running = true;
     while (m_running) {
@@ -174,7 +175,7 @@ Engine::Engine() {
         glBindVertexArray(0);
         glUseProgram(0);
 
-        SDL_GL_SwapWindow(m_window);
+        SDL_GL_SwapWindow(m_window.get());
     }
 
     // Delete VBO, VAO, and Shader Program
@@ -184,7 +185,6 @@ Engine::Engine() {
 }
 Engine::~Engine() {
     SDL_GL_DeleteContext(m_glContext);
-    SDL_DestroyWindow(m_window);
     SDL_Quit();
 }
 }  // namespace ige

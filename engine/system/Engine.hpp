@@ -1,7 +1,9 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <glad/glad.h>
+#include <glad.h>
+
+#include <memory>
 
 namespace ige {
 class Engine {
@@ -10,7 +12,7 @@ class Engine {
     ~Engine();
 
    private:
-    SDL_Window *m_window;
+    std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;
     SDL_GLContext m_glContext;
 };
 
