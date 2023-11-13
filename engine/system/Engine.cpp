@@ -36,10 +36,10 @@ Engine::Engine()
     std::cout << "Starting Engine..."
               << "\n";
 
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-    //                     SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError()
@@ -141,7 +141,7 @@ Engine::Engine()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    std::cout << glGetString(GL_VERSION) << "\n";
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << "\n";
 
     SDL_Event event;
     bool m_running = true;
