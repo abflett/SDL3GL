@@ -1,43 +1,86 @@
 #include "Engine.hpp"
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+std::string ReadFile(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Failed to open file " << filepath << std::endl;
+        return "";
+    }
+
+    std::stringstream ss;
+    std::string line;
+    while (getline(file, line)) {
+        ss << line << '\n';
+    }
+
+    return ss.str();
+}
+
+static GLuint CompileShader(GLuint type, const std::string& source) {
+    GLuint id = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
+
+    GLint compileStatus;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus != GL_TRUE) {
+        GLint logLength;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logLength);
+        std::vector<GLchar> log(logLength + 1);
+        glGetShaderInfoLog(id, logLength, nullptr, log.data());
+
+        // Print the compilation log
+        std::cerr << "Failed to compile "
+                  << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
+                  << " shader: " << log.data() << std::endl;
+
+        glDeleteShader(id);
+        return 0;
+    }
+
+    return id;
+}
+
+static GLuint CreateShader(const std::string& vertexShader,
+                           const std::string& fragmentShader) {
+    GLuint program = glCreateProgram();
+    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    glDetachShader(program, vs);
+    glDetachShader(program, fs);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    return program;
+}
 
 namespace ige {
-
-// Simple vertex shader
-const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-
-    void main()
-    {
-        gl_Position = vec4(aPos.x * 0.5, aPos.y * 0.5, aPos.z, 2.0);
-    }
-)";
-
-// Simple fragment shader
-const char* fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
-
-    void main()
-    {
-        FragColor = vec4(0.0, 1.0, 0.0, 1.0); // White color
-    }
-)";
-
 Engine::Engine()
     : m_window(SDL_CreateWindow("SDLGL Test", 800, 600,
                                 SDL_WindowFlags::SDL_WINDOW_OPENGL |
                                     SDL_WindowFlags::SDL_WINDOW_RESIZABLE),
                &SDL_DestroyWindow) {
-    SDL_Init(SDL_INIT_EVERYTHING);
-
     std::cout << "Starting Engine..."
               << "\n";
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_Init(SDL_INIT_EVERYTHING);
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
@@ -64,84 +107,45 @@ Engine::Engine()
         SDL_Quit();
     }
 
-    /// OPENGL
+#ifdef _DEBUG
+    std::cout << glGetString(GL_VERSION) << "\n";
+#endif
 
-    // Vertex data for a triangle
-    float vertices[] = {
-        0.0f,  0.5f,  0.0f,  // Top
-        -0.5f, -0.5f, 0.0f,  // Bottom-left
-        0.5f,  -0.5f, 0.0f   // Bottom-right
-    };
+    GLfloat positions[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f};
 
-    // Vertex Buffer Object (VBO)
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
+    GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
-    // Vertex Array Object (VAO)
     GLuint vao;
     glGenVertexArrays(1, &vao);
-
-    // Bind VAO
     glBindVertexArray(vao);
 
-    // Bind VBO
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
-    // Set vertex attribute pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
-                          (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     glEnableVertexAttribArray(0);
 
-    // Unbind VBO and VAO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GLuint ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
+
     glBindVertexArray(0);
 
-    // Vertex Shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+    std::string vertexShaderSource = ReadFile("assets/shaders/Basic.vert");
+    std::string fragmentShaderSource = ReadFile("assets/shaders/Basic.frag");
 
-    // Check for shader compilation errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "Vertex shader compilation failed: " << infoLog
-                  << std::endl;
-    }
+    GLuint shader = CreateShader(vertexShaderSource, fragmentShaderSource);
+    glUseProgram(shader);
 
-    // Fragment Shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
+    int uniformLocation = glGetUniformLocation(shader, "u_color");
+    glUniform4f(uniformLocation, 0.2f, 0.3f, 0.8f, 1.0f);
 
-    // Check for shader compilation errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Fragment shader compilation failed: " << infoLog
-                  << std::endl;
-    }
-
-    // Shader Program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    // Check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Shader program linking failed: " << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << "\n";
+    GLfloat red = 0.00f;
+    GLfloat r_increment = 0.001f;
 
     SDL_Event event;
     bool m_running = true;
@@ -158,30 +162,29 @@ Engine::Engine()
             }
         }
 
-        // Rendering
         glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Use the shader program
-        glUseProgram(shaderProgram);
-
-        // Bind VAO
+        glUseProgram(shader);
         glBindVertexArray(vao);
 
-        // Draw the triangle
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        if (red > 1.0f || red < 0.0f) {
+            r_increment *= -1;
+        }
+        red += r_increment;
+        glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
+        glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]),
+                       GL_UNSIGNED_INT, nullptr);
 
-        // Unbind VAO and Shader Program
         glBindVertexArray(0);
         glUseProgram(0);
-
         SDL_GL_SwapWindow(m_window.get());
     }
 
-    // Delete VBO, VAO, and Shader Program
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ibo);
     glDeleteVertexArrays(1, &vao);
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(shader);
 }
 Engine::~Engine() {
     SDL_GL_DeleteContext(m_glContext);

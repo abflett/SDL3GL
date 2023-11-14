@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <glad.h>
+#include <glad/glad.h>
 
 #include <memory>
 
