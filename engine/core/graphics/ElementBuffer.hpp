@@ -5,16 +5,19 @@
 
 namespace ige
 {
-    class VertexBuffer
+    class ElementBuffer
     {
     public:
-        VertexBuffer(const void *data, GLuint size);
-        ~VertexBuffer();
+        ElementBuffer(const GLuint *data, GLuint count);
+        ~ElementBuffer();
 
         void Bind() const;
         void Unbind() const;
 
+        GLuint GetCount() const;
+
     private:
         GLuint m_rendererId;
+        GLuint m_count;
     };
 }

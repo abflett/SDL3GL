@@ -1,4 +1,6 @@
 #include "Engine.hpp"
+#include "VertexBuffer.hpp"
+#include "ElementBuffer.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -6,7 +8,7 @@
 #include <string>
 #include <vector>
 
-std::string ReadFile(const std::string &filepath)
+static std::string ReadFile(const std::string &filepath)
 {
     std::ifstream file(filepath);
     if (!file.is_open())
@@ -85,8 +87,6 @@ namespace ige
         std::cout << "Starting Engine..."
                   << "\n";
 
-        VertexBuffer vb;
-
         SDL_Init(SDL_INIT_EVERYTHING);
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -133,19 +133,12 @@ namespace ige
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        GLuint vbo;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+        VertexBuffer vbo(positions, sizeof(positions));
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
         glEnableVertexAttribArray(0);
 
-        GLuint ibo;
-        glGenBuffers(1, &ibo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                     GL_STATIC_DRAW);
+        ElementBuffer ebo(indices, sizeof(indices) / sizeof(indices[0]));
 
         glBindVertexArray(0);
 
@@ -153,7 +146,6 @@ namespace ige
         std::string fragmentShaderSource = ReadFile("assets/shaders/Basic.frag");
 
         GLuint shader = CreateShader(vertexShaderSource, fragmentShaderSource);
-        glUseProgram(shader);
 
         int uniformLocation = glGetUniformLocation(shader, "u_color");
         glUniform4f(uniformLocation, 0.2f, 0.3f, 0.8f, 1.0f);
@@ -185,27 +177,29 @@ namespace ige
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(shader);
+            glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
+
             glBindVertexArray(vao);
+            ebo.Bind();
 
             if (red > 1.0f || red < 0.0f)
             {
                 r_increment *= -1;
             }
             red += r_increment;
-            glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
-            glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]),
+            glDrawElements(GL_TRIANGLES, ebo.GetCount(),
                            GL_UNSIGNED_INT, nullptr);
 
+            ebo.Unbind();
             glBindVertexArray(0);
             glUseProgram(0);
             SDL_GL_SwapWindow(m_window.get());
         }
 
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ibo);
         glDeleteVertexArrays(1, &vao);
         glDeleteProgram(shader);
     }
+
     Engine::~Engine()
     {
         SDL_GL_DeleteContext(m_glContext);

@@ -5,8 +5,6 @@
 
 #include <memory>
 
-#include "VertexBuffer.hpp"
-
 namespace ige
 {
     class Engine
