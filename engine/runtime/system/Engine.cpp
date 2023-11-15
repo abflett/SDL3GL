@@ -136,6 +136,27 @@ static GLuint CreateShader(const std::string &vertexShader,
     glAttachShader(program, vs);
     glAttachShader(program, fs);
     glLinkProgram(program);
+
+    // Check the link status
+    GLint linkStatus;
+    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+    if (linkStatus != GL_TRUE)
+    {
+        GLint logLength;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+        std::vector<GLchar> log(logLength + 1);
+        glGetProgramInfoLog(program, logLength, nullptr, log.data());
+
+        // Print the linking log
+        std::cerr << "Failed to link program: " << log.data() << std::endl;
+
+        glDeleteProgram(program);
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        return 0;
+    }
+
     glValidateProgram(program);
 
     glDetachShader(program, vs);
