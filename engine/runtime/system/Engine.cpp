@@ -3,6 +3,9 @@
 #include "VertexArray.hpp"
 #include "ElementBuffer.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -172,13 +175,14 @@ static GLuint CreateShader(const std::string &vertexShader,
 namespace ige
 {
     Engine::Engine()
-        : m_window(SDL_CreateWindow("SDLGL Test", 800, 600,
+        : m_window(SDL_CreateWindow("SDLGL Test", 1200, 600,
                                     SDL_WindowFlags::SDL_WINDOW_OPENGL |
                                         SDL_WindowFlags::SDL_WINDOW_RESIZABLE),
                    &SDL_DestroyWindow)
     {
         std::cout << "Starting Engine..."
                   << "\n";
+        float aspectRatio = 1200.0f / 600.0f;
 
         SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -186,6 +190,7 @@ namespace ige
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
         {
@@ -206,6 +211,8 @@ namespace ige
                       << std::endl;
             SDL_Quit();
         }
+
+        SDL_GL_SetSwapInterval(1); // Enable V-Sync
 
         if (!gladLoadGL())
         {
@@ -253,11 +260,20 @@ namespace ige
 
         GLuint shader = CreateShader(vertexShaderSource, fragmentShaderSource);
 
+        int mvpLocation = glGetUniformLocation(shader, "u_MVP");
         int uniformLocation = glGetUniformLocation(shader, "u_color");
-        glUniform4f(uniformLocation, 0.2f, 0.3f, 0.8f, 1.0f);
+
+        // Outside of the rendering loop
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Set up the model matrix (you can adjust this based on your needs)
+        glm::mat4 model = glm::mat4(1.0f);
+
+        float initialOrthoSize = 2.0f;
+        float orthoSize = initialOrthoSize;
 
         GLfloat red = 0.00f;
-        GLfloat r_increment = 0.001f;
+        GLfloat r_increment = 0.01f;
 
         SDL_Event event;
         bool m_running = true;
@@ -278,28 +294,39 @@ namespace ige
                     }
                 }
             }
-
             glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(shader);
+
+            // Update only the dynamic parts (e.g., the red factor) within the loop
             glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
 
             vao.Bind();
             ebo.Bind();
+
+            // Calculate the Model-View-Projection (MVP) matrix
+            glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
+
+            // Pass the MVP matrix to the shader
+            glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(mvp));
 
             if (red > 1.0f || red < 0.0f)
             {
                 r_increment *= -1;
             }
             red += r_increment;
-            glDrawElements(GL_TRIANGLES, ebo.GetCount(),
-                           GL_UNSIGNED_INT, nullptr);
+
+            // Dynamic zooming
+            orthoSize = initialOrthoSize + red;
+
+            glDrawElements(GL_TRIANGLES, ebo.GetCount(), GL_UNSIGNED_INT, nullptr);
 
             ebo.Unbind();
             glBindVertexArray(0);
             glUseProgram(0);
             SDL_GL_SwapWindow(m_window.get());
+            SDL_Delay(16);
         }
 
         glDeleteProgram(shader);
