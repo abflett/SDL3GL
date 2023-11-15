@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "VertexBuffer.hpp"
+#include "VertexArray.hpp"
 #include "ElementBuffer.hpp"
 
 #include <fstream>
@@ -228,22 +229,24 @@ namespace ige
         }
 #endif
 
-        GLfloat positions[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f};
+        GLfloat positions[] = {
+            -0.5f, -0.5f,
+            0.5f, -0.5f,
+            0.5f, 0.5f,
+            -0.5f, 0.5f};
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
-        GLuint vao;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-
+        VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-        glEnableVertexAttribArray(0);
+        VertexBufferLayout layout;
+        layout.Push<GLfloat>(2);
+        vao.AddBuffer(vbo, layout);
 
         ElementBuffer ebo(indices, sizeof(indices) / sizeof(indices[0]));
 
-        glBindVertexArray(0);
+        vbo.Unbind();
 
         std::string vertexShaderSource = ReadFile("assets/shaders/Basic.vert");
         std::string fragmentShaderSource = ReadFile("assets/shaders/Basic.frag");
@@ -282,7 +285,7 @@ namespace ige
             glUseProgram(shader);
             glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
 
-            glBindVertexArray(vao);
+            vao.Bind();
             ebo.Bind();
 
             if (red > 1.0f || red < 0.0f)
@@ -299,7 +302,6 @@ namespace ige
             SDL_GL_SwapWindow(m_window.get());
         }
 
-        glDeleteVertexArrays(1, &vao);
         glDeleteProgram(shader);
     }
 
@@ -308,4 +310,4 @@ namespace ige
         SDL_GL_DeleteContext(m_glContext);
         SDL_Quit();
     }
-} // namespace ige
+}
