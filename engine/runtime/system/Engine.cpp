@@ -4,6 +4,7 @@
 #include "ElementBuffer.hpp"
 #include "FileUtil.hpp"
 #include "OpenGlUtil.hpp"
+#include "Shader.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -12,75 +13,75 @@
 #include <string>
 #include <vector>
 
-static GLuint CompileShader(GLuint type, const std::string &source)
-{
-    GLuint id = glCreateShader(type);
-    const char *src = source.c_str();
-    glShaderSource(id, 1, &src, nullptr);
-    glCompileShader(id);
+// static GLuint CompileShader(GLuint type, const std::string &source)
+// {
+//     GLuint id = glCreateShader(type);
+//     const char *src = source.c_str();
+//     glShaderSource(id, 1, &src, nullptr);
+//     glCompileShader(id);
 
-    GLint compileStatus;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus != GL_TRUE)
-    {
-        GLint logLength;
-        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logLength);
-        std::vector<GLchar> log(logLength + 1);
-        glGetShaderInfoLog(id, logLength, nullptr, log.data());
+//     GLint compileStatus;
+//     glGetShaderiv(id, GL_COMPILE_STATUS, &compileStatus);
+//     if (compileStatus != GL_TRUE)
+//     {
+//         GLint logLength;
+//         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &logLength);
+//         std::vector<GLchar> log(logLength + 1);
+//         glGetShaderInfoLog(id, logLength, nullptr, log.data());
 
-        // Print the compilation log
-        std::cerr << "Failed to compile "
-                  << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
-                  << " shader: " << log.data() << std::endl;
+//         // Print the compilation log
+//         std::cerr << "Failed to compile "
+//                   << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
+//                   << " shader: " << log.data() << std::endl;
 
-        glDeleteShader(id);
-        return 0;
-    }
+//         glDeleteShader(id);
+//         return 0;
+//     }
 
-    return id;
-}
+//     return id;
+// }
 
-static GLuint CreateShader(const std::string &vertexShader,
-                           const std::string &fragmentShader)
-{
-    GLuint program = glCreateProgram();
-    GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+// static GLuint CreateShader(const std::string &vertexShader,
+//                            const std::string &fragmentShader)
+// {
+//     GLuint program = glCreateProgram();
+//     GLuint vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+//     GLuint fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
 
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
+//     glAttachShader(program, vs);
+//     glAttachShader(program, fs);
+//     glLinkProgram(program);
 
-    // Check the link status
-    GLint linkStatus;
-    glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-    if (linkStatus != GL_TRUE)
-    {
-        GLint logLength;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-        std::vector<GLchar> log(logLength + 1);
-        glGetProgramInfoLog(program, logLength, nullptr, log.data());
+//     // Check the link status
+//     GLint linkStatus;
+//     glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
+//     if (linkStatus != GL_TRUE)
+//     {
+//         GLint logLength;
+//         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
+//         std::vector<GLchar> log(logLength + 1);
+//         glGetProgramInfoLog(program, logLength, nullptr, log.data());
 
-        // Print the linking log
-        std::cerr << "Failed to link program: " << log.data() << std::endl;
+//         // Print the linking log
+//         std::cerr << "Failed to link program: " << log.data() << std::endl;
 
-        glDeleteProgram(program);
-        glDeleteShader(vs);
-        glDeleteShader(fs);
+//         glDeleteProgram(program);
+//         glDeleteShader(vs);
+//         glDeleteShader(fs);
 
-        return 0;
-    }
+//         return 0;
+//     }
 
-    glValidateProgram(program);
+//     glValidateProgram(program);
 
-    glDetachShader(program, vs);
-    glDetachShader(program, fs);
+//     glDetachShader(program, vs);
+//     glDetachShader(program, fs);
 
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+//     glDeleteShader(vs);
+//     glDeleteShader(fs);
 
-    return program;
-}
+//     return program;
+// }
 
 namespace ige
 {
@@ -90,8 +91,6 @@ namespace ige
                                         SDL_WindowFlags::SDL_WINDOW_RESIZABLE),
                    &SDL_DestroyWindow)
     {
-        std::cout << "Starting Engine..."
-                  << "\n";
         float aspectRatio = 1200.0f / 600.0f;
 
         SDL_Init(SDL_INIT_EVERYTHING);
@@ -167,20 +166,15 @@ namespace ige
 
         vbo.Unbind();
 
-        std::string vertexShaderSource = FileUtil::ReadFileToString("assets/shaders/Basic.vert");
-        std::string fragmentShaderSource = FileUtil::ReadFileToString("assets/shaders/Basic.frag");
-
-        GLuint shader = CreateShader(vertexShaderSource, fragmentShaderSource);
-
-        int mvpLocation = glGetUniformLocation(shader, "u_MVP");
-        int uniformLocation = glGetUniformLocation(shader, "u_color");
+        Shader shader("");
+        shader.Bind();
+        shader.SetUniforms4f("u_color", 0.8f, 0.3f, 0.8f, 1.0f);
+        int mvpLocation = glGetUniformLocation(shader.GetShader(), "u_MVP");
 
         // Outside of the rendering loop
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
         // Set up the model matrix (you can adjust this based on your needs)
         glm::mat4 model = glm::mat4(1.0f);
-
         float initialOrthoSize = 2.0f;
         float orthoSize = initialOrthoSize;
 
@@ -206,14 +200,11 @@ namespace ige
                     }
                 }
             }
+
             glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            glUseProgram(shader);
-
-            // Update only the dynamic parts (e.g., the red factor) within the loop
-            glUniform4f(uniformLocation, red, 0.3f, 0.8f, 1.0f);
-
+            shader.Bind();
             vao.Bind();
             ebo.Bind();
 
@@ -229,19 +220,19 @@ namespace ige
             }
             red += r_increment;
 
+            shader.SetUniforms4f("u_color", red, 0.3f, 0.8f, 1.0f);
+
             // Dynamic zooming
             orthoSize = initialOrthoSize + red;
 
-            glDrawElements(GL_TRIANGLES, ebo.GetCount(), GL_INT, nullptr);
+            glDrawElements(GL_TRIANGLES, ebo.GetCount(), GL_UNSIGNED_INT, nullptr);
 
             ebo.Unbind();
             glBindVertexArray(0);
-            glUseProgram(0);
+            shader.Unbind();
             SDL_GL_SwapWindow(m_window.get());
             SDL_Delay(16);
         }
-
-        glDeleteProgram(shader);
     }
 
     Engine::~Engine()
