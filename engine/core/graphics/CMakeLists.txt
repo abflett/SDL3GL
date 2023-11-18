@@ -3,6 +3,7 @@ file(GLOB_RECURSE libsrc *.hpp *.cpp)
 add_library(graphics ${libsrc})
 
 target_link_libraries(graphics
+    PUBLIC common
     PUBLIC external
 )
 

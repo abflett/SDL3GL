@@ -9,7 +9,5 @@ namespace ige
         GLuint type;
         GLuint count;
         GLboolean normalized;
-
-        static GLuint GetSizeOfType(GLuint type);
     };
 }

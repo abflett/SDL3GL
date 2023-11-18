@@ -3,7 +3,7 @@
 #include <vector>
 #include <glad/glad.h>
 
-#include "VertexBufferElement.hpp"
+#include "VertexBufferLayoutElement.hpp"
 
 namespace ige
 {

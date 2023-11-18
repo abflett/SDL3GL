@@ -6,9 +6,6 @@ namespace ige
 {
     VertexBuffer::VertexBuffer(const void *data, GLuint size)
     {
-        std::cout << "Creating VertexBuffer..."
-                  << "\n";
-
         glGenBuffers(1, &m_rendererId);
         glBindBuffer(GL_ARRAY_BUFFER, m_rendererId);
         glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);

@@ -7,9 +7,6 @@ namespace ige
     ElementBuffer::ElementBuffer(const GLuint *data, GLuint count)
         : m_count(count)
     {
-        std::cout << "Creating ElementBuffer..."
-                  << "\n";
-
         glGenBuffers(1, &m_rendererId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_rendererId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_count * sizeof(GLuint), data, GL_STATIC_DRAW);
