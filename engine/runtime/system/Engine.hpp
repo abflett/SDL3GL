@@ -13,8 +13,11 @@ namespace ige
         Engine();
         ~Engine();
 
+        void HandleEvents(SDL_Event &event);
+
     private:
         std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;
         SDL_GLContext m_glContext;
+        bool m_running;
     };
 }

@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 
+#include <glm/gtc/type_ptr.hpp>
+
 namespace ige
 {
     Shader::Shader(const std::string &filepath) : m_rendererId(0), m_filePath(filepath)
@@ -35,14 +37,28 @@ namespace ige
         glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
     }
 
-    GLuint Shader::GetShader()
+    void Shader::SetUniformMatrix4fv(const std::string &name, const glm::mat4 &matrix)
     {
-        return m_rendererId;
+        glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
     GLuint Shader::GetUniformLocation(const std::string &name)
     {
-        return glGetUniformLocation(m_rendererId, name.c_str());
+        if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
+        {
+            return m_uniformLocationCache[name];
+        }
+
+        // Todo fix return type structure
+        GLint location = glGetUniformLocation(m_rendererId, name.c_str());
+        if (location == -1)
+        {
+            std::cerr << "Error: uniform '" << name << "' does not exist!"
+                      << "\n";
+        }
+
+        m_uniformLocationCache[name] = location;
+        return location;
     }
 
     GLuint Shader::CreateShader(const std::string &vertexShader,
