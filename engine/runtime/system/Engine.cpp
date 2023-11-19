@@ -5,6 +5,7 @@
 #include "OpenGlUtil.hpp"
 #include "Shader.hpp"
 #include "Renderer.hpp"
+#include "Texture.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
@@ -31,7 +32,7 @@ namespace ige
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 #ifdef _DEBUG
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
@@ -57,7 +58,7 @@ namespace ige
             SDL_Quit();
         }
 
-        SDL_GL_SetSwapInterval(1); // Enable V-Sync
+        // SDL_GL_SetSwapInterval(1); // Enable V-Sync
 
         if (!gladLoadGL())
         {
@@ -65,6 +66,9 @@ namespace ige
             SDL_GL_DeleteContext(m_glContext);
             SDL_Quit();
         }
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #ifdef _DEBUG
         std::cout << glGetString(GL_VERSION) << "\n";
@@ -79,23 +83,16 @@ namespace ige
         }
 #endif
 
-        // SDL_Surface *surface =
-        SDL_Surface *surface = IMG_Load("assets/textures/isometric_pixel_0055.png");
-        if (!surface)
-        {
-            std::cerr << "Failed to load image: " << IMG_GetError() << std::endl;
-        }
-
         GLfloat positions[] = {
-            -0.5f, -0.5f,
-            0.5f, -0.5f,
-            0.5f, 0.5f,
-            -0.5f, 0.5f};
+            -0.5f, -0.5f, 0.0f, 0.0f,
+            0.5f, -0.5f, 1.0f, 0.0f,
+            0.5f, 0.5f, 1.0f, 1.0f,
+            -0.5f, 0.5f, 0.0f, 1.0f};
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
-        GLfloat red = 0.00f;
-        GLfloat r_increment = 0.01f;
+        GLfloat zoom = 0.00f;
+        GLfloat zoomPos = 0.01f;
 
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.0f);
@@ -105,16 +102,18 @@ namespace ige
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
-        VertexBufferLayout layout;
         ElementBuffer ebo(indices, sizeof(indices) / sizeof(indices[0]));
 
+        VertexBufferLayout layout;
+        layout.Push<GLfloat>(2);
         layout.Push<GLfloat>(2);
         vao.AddBuffer(vbo, layout);
 
         Shader shader("");
-        shader.Bind();
-        shader.SetUniforms4f("u_color", 0.8f, 0.3f, 0.8f, 1.0f);
         shader.SetUniformMatrix4fv("u_MVP", mvp);
+
+        Texture texture("assets/textures/isometric_pixel_0055.png");
+        shader.SetUniform1i("u_texture", 0);
 
         vao.Unbind();
         vbo.Unbind();
@@ -132,17 +131,17 @@ namespace ige
             // draw
             renderer.Clear();
             shader.Bind();
-            shader.SetUniforms4f("u_color", red, 0.3f, 0.8f, 1.0f);
+            // shader.SetUniform4f("u_color", red, 0.3f, 0.8f, 1.0f);
             shader.SetUniformMatrix4fv("u_MVP", mvp);
             renderer.Draw(vao, ebo, shader);
 
             // update
-            if (red > 1.0f || red < 0.0f)
+            if (zoom > 1.0f || zoom < 0.0f)
             {
-                r_increment *= -1;
+                zoomPos *= -1;
             }
-            red += r_increment;
-            orthoSize = initialOrthoSize + red;
+            zoom += zoomPos;
+            orthoSize = initialOrthoSize + zoom + 1.0f;
             mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
 
             SDL_Delay(16);

@@ -15,6 +15,7 @@ namespace ige
         std::string fragmentShaderSource = FileUtil::ReadFileToString("assets/shaders/Basic.frag");
 
         m_rendererId = CreateShader(vertexShaderSource, fragmentShaderSource);
+        Bind();
     }
 
     Shader::~Shader()
@@ -32,7 +33,12 @@ namespace ige
         glUseProgram(0);
     }
 
-    void Shader::SetUniforms4f(const std::string &name, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
+    void Shader::SetUniform1i(const std::string &name, GLint value)
+    {
+        glUniform1i(GetUniformLocation(name), value);
+    }
+
+    void Shader::SetUniform4f(const std::string &name, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
     {
         glUniform4f(GetUniformLocation(name), v0, v1, v2, v3);
     }
@@ -42,7 +48,7 @@ namespace ige
         glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    GLuint Shader::GetUniformLocation(const std::string &name)
+    GLint Shader::GetUniformLocation(const std::string &name)
     {
         if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
         {
