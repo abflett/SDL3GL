@@ -2,16 +2,15 @@
 #include "VertexBuffer.hpp"
 #include "VertexArray.hpp"
 #include "ElementBuffer.hpp"
-// #include "FileUtil.hpp"
 #include "OpenGlUtil.hpp"
 #include "Shader.hpp"
+#include "Renderer.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 
 #include <iostream>
 #include <string>
-// #include <vector>
 
 namespace ige
 {
@@ -86,6 +85,9 @@ namespace ige
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
+        GLfloat red = 0.00f;
+        GLfloat r_increment = 0.01f;
+
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.0f);
         float initialOrthoSize = 2.0f;
@@ -94,12 +96,11 @@ namespace ige
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
-
         VertexBufferLayout layout;
+        ElementBuffer ebo(indices, sizeof(indices) / sizeof(indices[0]));
+
         layout.Push<GLfloat>(2);
         vao.AddBuffer(vbo, layout);
-
-        ElementBuffer ebo(indices, sizeof(indices) / sizeof(indices[0]));
 
         Shader shader("");
         shader.Bind();
@@ -111,40 +112,32 @@ namespace ige
         ebo.Unbind();
         shader.Unbind();
 
-        GLfloat red = 0.00f;
-        GLfloat r_increment = 0.01f;
+        Renderer renderer;
 
         SDL_Event event;
         while (m_running)
         {
+            // events
             HandleEvents(event);
 
-            glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
-
+            // draw
+            renderer.Clear();
             shader.Bind();
             shader.SetUniforms4f("u_color", red, 0.3f, 0.8f, 1.0f);
             shader.SetUniformMatrix4fv("u_MVP", mvp);
+            renderer.Draw(vao, ebo, shader);
 
-            vao.Bind();
-            ebo.Bind();
-
+            // update
             if (red > 1.0f || red < 0.0f)
             {
                 r_increment *= -1;
             }
             red += r_increment;
             orthoSize = initialOrthoSize + red;
+            mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
 
-            glDrawElements(GL_TRIANGLES, ebo.GetCount(), GL_UNSIGNED_INT, nullptr);
-
-            ebo.Unbind();
-            vao.Unbind();
-            shader.Unbind();
-            SDL_GL_SwapWindow(m_window.get());
             SDL_Delay(16);
+            SDL_GL_SwapWindow(m_window.get());
         }
     }
 
