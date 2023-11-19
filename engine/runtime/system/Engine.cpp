@@ -24,7 +24,7 @@ namespace ige
                    &SDL_DestroyWindow),
           m_running(true)
     {
-        float aspectRatio = 1200.0f / 600.0f;
+        aspectRatio = 1200.0f / 600.0f;
 
         SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -92,13 +92,16 @@ namespace ige
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
         GLfloat zoom = 0.00f;
-        GLfloat zoomPos = 0.01f;
+        GLfloat zoomPos = 0.05f;
+
+        GLfloat orthSize = 1.0f;
+        glm::mat4 projection = glm::ortho(-orthSize, orthSize, -orthSize / aspectRatio, orthSize / aspectRatio, -1.0f, 200.0f);
 
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.0f);
-        float initialOrthoSize = 2.0f;
+        float initialOrthoSize = 1.0f;
         float orthoSize = initialOrthoSize;
-        glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
+        glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 200.0f) * view * model;
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
@@ -110,7 +113,8 @@ namespace ige
         vao.AddBuffer(vbo, layout);
 
         Shader shader("");
-        shader.SetUniformMatrix4fv("u_MVP", mvp);
+        // shader.SetUniformMatrix4fv("u_MVP", mvp);
+        shader.SetUniformMatrix4fv("u_MVP", projection);
 
         Texture texture("assets/textures/isometric_pixel_0055.png");
         shader.SetUniform1i("u_texture", 0);
@@ -128,21 +132,20 @@ namespace ige
             // events
             HandleEvents(event);
 
-            // draw
-            renderer.Clear();
-            shader.Bind();
-            // shader.SetUniform4f("u_color", red, 0.3f, 0.8f, 1.0f);
-            shader.SetUniformMatrix4fv("u_MVP", mvp);
-            renderer.Draw(vao, ebo, shader);
-
             // update
-            if (zoom > 1.0f || zoom < 0.0f)
+            if (zoom > 10.0f || zoom < 0.0f)
             {
                 zoomPos *= -1;
             }
             zoom += zoomPos;
-            orthoSize = initialOrthoSize + zoom + 1.0f;
-            mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 100.0f) * view * model;
+            orthoSize = initialOrthoSize + zoom;
+            mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 200.0f) * view * model;
+
+            // draw
+            renderer.Clear();
+            shader.Bind();
+            shader.SetUniformMatrix4fv("u_MVP", mvp);
+            renderer.Draw(vao, ebo, shader);
 
             SDL_Delay(16);
             SDL_GL_SwapWindow(m_window.get());
@@ -170,6 +173,12 @@ namespace ige
                 {
                     m_running = false;
                 }
+            }
+            if (event.type == SDL_EVENT_WINDOW_RESIZED &&
+                event.window.type == SDL_EVENT_WINDOW_RESIZED)
+            {
+                aspectRatio = static_cast<float>(event.window.data1) / static_cast<float>(event.window.data2);
+                std::cout << "Aspect Ration Changed: " << aspectRatio << std::endl;
             }
         }
     }
