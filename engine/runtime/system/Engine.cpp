@@ -12,6 +12,8 @@
 #include <iostream>
 #include <string>
 
+#include <SDL3_image/SDL_image.h>
+
 namespace ige
 {
     Engine::Engine()
@@ -77,13 +79,18 @@ namespace ige
         }
 #endif
 
-        SDL_Surface *surface =
+        // SDL_Surface *surface =
+        SDL_Surface *surface = IMG_Load("assets/textures/isometric_pixel_0055.png");
+        if (!surface)
+        {
+            std::cerr << "Failed to load image: " << IMG_GetError() << std::endl;
+        }
 
-            GLfloat positions[] = {
-                -0.5f, -0.5f,
-                0.5f, -0.5f,
-                0.5f, 0.5f,
-                -0.5f, 0.5f};
+        GLfloat positions[] = {
+            -0.5f, -0.5f,
+            0.5f, -0.5f,
+            0.5f, 0.5f,
+            -0.5f, 0.5f};
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
