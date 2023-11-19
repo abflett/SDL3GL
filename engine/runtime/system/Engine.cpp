@@ -77,11 +77,13 @@ namespace ige
         }
 #endif
 
-        GLfloat positions[] = {
-            -0.5f, -0.5f,
-            0.5f, -0.5f,
-            0.5f, 0.5f,
-            -0.5f, 0.5f};
+        SDL_Surface *surface =
+
+            GLfloat positions[] = {
+                -0.5f, -0.5f,
+                0.5f, -0.5f,
+                0.5f, 0.5f,
+                -0.5f, 0.5f};
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
