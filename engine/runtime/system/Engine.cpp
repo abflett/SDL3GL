@@ -99,8 +99,8 @@ namespace ige
 
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 model = glm::mat4(1.0f);
-        float initialOrthoSize = 1.0f;
-        float orthoSize = initialOrthoSize;
+        GLfloat initialOrthoSize = 1.0f;
+        GLfloat orthoSize = initialOrthoSize;
         glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 200.0f) * view * model;
 
         VertexArray vao;
@@ -177,7 +177,7 @@ namespace ige
             if (event.type == SDL_EVENT_WINDOW_RESIZED &&
                 event.window.type == SDL_EVENT_WINDOW_RESIZED)
             {
-                aspectRatio = static_cast<float>(event.window.data1) / static_cast<float>(event.window.data2);
+                aspectRatio = static_cast<GLfloat>(event.window.data1) / static_cast<GLfloat>(event.window.data2);
                 std::cout << "Aspect Ration Changed: " << aspectRatio << std::endl;
             }
         }
