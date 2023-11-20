@@ -8,7 +8,6 @@
 #include "Texture.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/glm.hpp>
 
 #include <iostream>
 #include <string>
@@ -91,17 +90,8 @@ namespace ige
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
-        GLfloat zoom = 0.00f;
-        GLfloat zoomPos = 0.05f;
-
-        GLfloat orthSize = 1.0f;
-        glm::mat4 projection = glm::ortho(-orthSize, orthSize, -orthSize / aspectRatio, orthSize / aspectRatio, -1.0f, 200.0f);
-
-        glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 model = glm::mat4(1.0f);
-        GLfloat initialOrthoSize = 1.0f;
-        GLfloat orthoSize = initialOrthoSize;
-        glm::mat4 mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 200.0f) * view * model;
+        m_orthoSize = 10.0f;
+        m_mvp = glm::ortho(-m_orthoSize * aspectRatio, m_orthoSize * aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
@@ -114,9 +104,9 @@ namespace ige
 
         Shader shader("");
         // shader.SetUniformMatrix4fv("u_MVP", mvp);
-        shader.SetUniformMatrix4fv("u_MVP", projection);
+        shader.SetUniformMatrix4fv("u_MVP", m_mvp);
 
-        Texture texture("assets/textures/isometric_pixel_0055.png");
+        Texture texture("assets/textures/green_outline_block_001.png");
         shader.SetUniform1i("u_texture", 0);
 
         vao.Unbind();
@@ -133,18 +123,11 @@ namespace ige
             HandleEvents(event);
 
             // update
-            if (zoom > 10.0f || zoom < 0.0f)
-            {
-                zoomPos *= -1;
-            }
-            zoom += zoomPos;
-            orthoSize = initialOrthoSize + zoom;
-            mvp = glm::ortho(-orthoSize, orthoSize, -orthoSize / aspectRatio, orthoSize / aspectRatio, 0.1f, 200.0f) * view * model;
 
             // draw
             renderer.Clear();
             shader.Bind();
-            shader.SetUniformMatrix4fv("u_MVP", mvp);
+            shader.SetUniformMatrix4fv("u_MVP", m_mvp);
             renderer.Draw(vao, ebo, shader);
 
             SDL_Delay(16);
@@ -179,6 +162,9 @@ namespace ige
             {
                 aspectRatio = static_cast<GLfloat>(event.window.data1) / static_cast<GLfloat>(event.window.data2);
                 std::cout << "Aspect Ration Changed: " << aspectRatio << std::endl;
+
+                GLfloat orthoSizeX = m_orthoSize * aspectRatio;
+                m_mvp = glm::ortho(-orthoSizeX, orthoSizeX, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
             }
         }
     }

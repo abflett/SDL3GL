@@ -1,4 +1,5 @@
 add_subdirectory(common)
+add_subdirectory(resources)
 add_subdirectory(graphics)
 
 add_library(core INTERFACE)
