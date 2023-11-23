@@ -152,6 +152,7 @@ namespace ige
         while (m_running)
         {
             // events
+
             HandleEvents(event);
 
             // Calculate FPS information
@@ -161,7 +162,7 @@ namespace ige
             float fps = 1.0f / deltaTime;
             fpsHistory.push_front(fps);
 
-            // Update highest and lowest FPS
+            // Update highest and lowest FPS after 1 second past
             if (SDL_GetTicks() > 1000)
             {
                 highestFPS = std::max(highestFPS, fps);
@@ -184,7 +185,8 @@ namespace ige
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
-            ImGui::SetNextWindowSize(ImVec2(400, 150)); // Adjust the size as needed
+            ImGui::ShowDemoWindow();
+            // ImGui::SetNextWindowSize(ImVec2(400, 150), ImGuiCond_FirstUseEver); // Adjust the size as needed
             ImGui::Begin("Debug Info");
             ImGui::Text("FPS: %.1f", fps);
             ImGui::Text("Average FPS: %.1f", averageFPS);
@@ -219,9 +221,10 @@ namespace ige
 
     void Engine::HandleEvents(SDL_Event &event)
     {
-        ImGui_ImplSDL3_ProcessEvent(&event);
+
         while (SDL_PollEvent(&event))
         {
+            ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT)
             {
                 m_running = false;
