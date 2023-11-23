@@ -7,6 +7,9 @@
 #include "Renderer.hpp"
 #include "Texture.hpp"
 
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_opengl3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
@@ -26,6 +29,12 @@ namespace ige
         aspectRatio = 1200.0f / 600.0f;
 
         SDL_Init(SDL_INIT_EVERYTHING);
+
+        SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+        SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
