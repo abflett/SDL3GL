@@ -52,10 +52,10 @@ namespace ige
     {
         if (m_uniformLocationCache.find(name) != m_uniformLocationCache.end())
         {
-            return m_uniformLocationCache[name];
+            GLint location = m_uniformLocationCache[name];
+            return location;
         }
 
-        // Todo fix return type structure
         GLint location = glGetUniformLocation(m_rendererId, name.c_str());
         if (location == -1)
         {
