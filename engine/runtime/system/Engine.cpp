@@ -12,6 +12,8 @@
 #include <imgui_impl_opengl3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <deque>
+#include <chrono>
 #include <iostream>
 #include <string>
 
@@ -22,11 +24,12 @@ namespace ige
     Engine::Engine()
         : m_window(SDL_CreateWindow("SDLGL Test", 1200, 600,
                                     SDL_WindowFlags::SDL_WINDOW_OPENGL |
-                                        SDL_WindowFlags::SDL_WINDOW_RESIZABLE),
+                                        SDL_WindowFlags::SDL_WINDOW_RESIZABLE | SDL_WindowFlags::SDL_WINDOW_HIDDEN),
                    &SDL_DestroyWindow),
           m_running(true)
     {
         aspectRatio = 1200.0f / 600.0f;
+        const char *glsl_version = "#version 330 core";
 
         SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -40,7 +43,6 @@ namespace ige
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                             SDL_GL_CONTEXT_PROFILE_CORE);
-        // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 #ifdef _DEBUG
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
@@ -66,7 +68,19 @@ namespace ige
             SDL_Quit();
         }
 
-        // SDL_GL_SetSwapInterval(1); // Enable V-Sync
+        // TODO: handle multiwindow contexts for splash screen
+        SDL_GL_MakeCurrent(m_window.get(), m_glContext);
+        SDL_GL_SetSwapInterval(0); // Enable vsync toggle this on and off?
+        SDL_ShowWindow(m_window.get());
+
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+        ImGui::StyleColorsDark();
 
         if (!gladLoadGL())
         {
@@ -74,6 +88,9 @@ namespace ige
             SDL_GL_DeleteContext(m_glContext);
             SDL_Quit();
         }
+
+        ImGui_ImplSDL3_InitForOpenGL(m_window.get(), m_glContext);
+        ImGui_ImplOpenGL3_Init(glsl_version);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -125,33 +142,84 @@ namespace ige
 
         Renderer renderer;
 
+        auto startTime = std::chrono::high_resolution_clock::now();
+        std::deque<float> fpsHistory; // Store recent FPS values for averaging
+
+        float highestFPS = 0.0f;
+        float lowestFPS = std::numeric_limits<float>::max(); // Initialize with a large value
+
         SDL_Event event;
         while (m_running)
         {
             // events
             HandleEvents(event);
 
+            // Calculate FPS information
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+            float fps = 1.0f / deltaTime;
+            fpsHistory.push_front(fps);
+
+            // Update highest and lowest FPS
+            if (SDL_GetTicks() > 1000)
+            {
+                highestFPS = std::max(highestFPS, fps);
+                lowestFPS = std::min(lowestFPS, fps);
+            }
+
+            const size_t maxHistorySize = 5000;
+            while (fpsHistory.size() > maxHistorySize)
+            {
+                fpsHistory.pop_back();
+            }
+
+            float averageFPS = 0.0f;
+            for (float value : fpsHistory)
+                averageFPS += value;
+            averageFPS /= static_cast<float>(fpsHistory.size());
+            startTime = currentTime;
+
+            // Init ImgGui frames?
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL3_NewFrame();
+            ImGui::NewFrame();
+            ImGui::SetNextWindowSize(ImVec2(400, 150)); // Adjust the size as needed
+            ImGui::Begin("Debug Info");
+            ImGui::Text("FPS: %.1f", fps);
+            ImGui::Text("Average FPS: %.1f", averageFPS);
+            ImGui::Text("Highest FPS: %.1f", highestFPS);
+            ImGui::Text("Lowest FPS: %.1f", lowestFPS);
+            ImGui::End();
+            ImGui::Render();
+
             // update
 
             // draw
+
+            glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
             renderer.Clear();
             shader.Bind();
             shader.SetUniformMatrix4fv("u_MVP", m_mvp);
             renderer.Draw(vao, ebo, shader);
-
-            SDL_Delay(16);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             SDL_GL_SwapWindow(m_window.get());
         }
     }
 
     Engine::~Engine()
     {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
+
         SDL_GL_DeleteContext(m_glContext);
         SDL_Quit();
     }
 
     void Engine::HandleEvents(SDL_Event &event)
     {
+        ImGui_ImplSDL3_ProcessEvent(&event);
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)

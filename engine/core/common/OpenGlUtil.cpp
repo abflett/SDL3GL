@@ -7,6 +7,7 @@ namespace ige
 {
     void APIENTRY OpenGlUtil::DebugOutputCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
     {
+        bool g_suppressInfoMessages = true;
         // Convert GLenum values to human-readable strings
         std::string sourceStr, typeStr, severityStr;
 
@@ -65,6 +66,16 @@ namespace ige
         case GL_DEBUG_SEVERITY_LOW_ARB:
             severityStr = "Low";
             break;
+        default:
+            severityStr = "Unknown";
+            break;
+        }
+
+        // Check if the message should be suppressed based on severity and the global flag
+        if (g_suppressInfoMessages && severityStr == "Unknown")
+        {
+            // Suppress informational messages
+            return;
         }
 
         // Print the debug output details
