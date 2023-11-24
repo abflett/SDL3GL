@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
               << "\n";
 
     ige::Engine engine;
+    engine.Run();
 
     return EXIT_SUCCESS;
 }

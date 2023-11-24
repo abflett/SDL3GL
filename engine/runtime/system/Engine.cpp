@@ -28,7 +28,6 @@ namespace ige
           m_running(true)
     {
         aspectRatio = 1200.0f / 600.0f;
-        const char *glsl_version = "#version 330 core";
 
         m_glContext = SDL_GL_CreateContext(m_window.GetSDLWindow());
         if (!m_glContext)
@@ -42,24 +41,12 @@ namespace ige
         SDL_GL_SetSwapInterval(0);
         SDL_ShowWindow(m_window.GetSDLWindow());
 
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO &io = ImGui::GetIO();
-        (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-
-        ImGui::StyleColorsDark();
-
         if (!gladLoadGL())
         {
             std::cerr << "Failed to initialize GLAD!" << std::endl;
             SDL_GL_DeleteContext(m_glContext);
             SDL_Quit();
         }
-
-        ImGui_ImplSDL3_InitForOpenGL(m_window.GetSDLWindow(), m_glContext);
-        ImGui_ImplOpenGL3_Init(glsl_version);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -76,6 +63,31 @@ namespace ige
             std::cerr << "GL_ARB_debug_output not supported. Debugging features will be limited." << std::endl;
         }
 #endif
+    }
+
+    Engine::~Engine()
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
+
+        SDL_GL_DeleteContext(m_glContext);
+        SDL_Quit();
+    }
+
+    void Engine::Run()
+    {
+
+        const char *glsl_version = "#version 330 core";
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+        ImGui_ImplSDL3_InitForOpenGL(m_window.GetSDLWindow(), m_glContext);
+        ImGui_ImplOpenGL3_Init(glsl_version);
+        ImGui::StyleColorsDark();
 
         GLfloat positions[] = {
             -0.5f, -0.5f, 0.0f, 0.0f,
@@ -98,7 +110,6 @@ namespace ige
         vao.AddBuffer(vbo, layout);
 
         Shader shader("");
-        // shader.SetUniformMatrix4fv("u_MVP", mvp);
         shader.SetUniformMatrix4fv("u_MVP", m_mvp);
 
         Texture texture("assets/textures/green_outline_block_001.png");
@@ -145,15 +156,5 @@ namespace ige
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             SDL_GL_SwapWindow(m_window.GetSDLWindow());
         }
-    }
-
-    Engine::~Engine()
-    {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplSDL3_Shutdown();
-        ImGui::DestroyContext();
-
-        SDL_GL_DeleteContext(m_glContext);
-        SDL_Quit();
     }
 }

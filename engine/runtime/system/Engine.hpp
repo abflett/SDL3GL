@@ -16,6 +16,8 @@ namespace ige
         Engine();
         ~Engine();
 
+        void Run();
+
     private:
         Window m_window;
         SDL_GLContext m_glContext;
