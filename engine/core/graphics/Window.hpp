@@ -11,7 +11,6 @@ namespace ige
     {
     public:
         Window(int width, int height, const char *title);
-        ~Window();
 
         SDL_Window *GetSDLWindow() const;
 

@@ -24,10 +24,10 @@
 namespace ige
 {
     Engine::Engine()
-        : m_window(1200, 600, "SDLGL Test"),
+        : m_window(1200, 600, "SDL3GL Demo"),
           m_running(true)
     {
-        aspectRatio = 1200.0f / 600.0f;
+        m_aspectRatio = 1200.0f / 600.0f;
 
         m_glContext = SDL_GL_CreateContext(m_window.GetSDLWindow());
         if (!m_glContext)
@@ -97,8 +97,18 @@ namespace ige
 
         GLuint indices[] = {0, 1, 2, 2, 3, 0};
 
-        m_orthoSize = 10.0f;
-        m_mvp = glm::ortho(-m_orthoSize * aspectRatio, m_orthoSize * aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
+        // Todo: Normalize the projection so pixels are true for setting max and min zoom levels.
+        // Set the desired pixel density (64x64 area corresponds to 1 unit)
+        float pixelsPerUnit = 64.0f;
+        // Calculate the orthographic size
+        m_orthoSize = (float)600 / (4 * pixelsPerUnit);
+        // Adjust orthoSize based on the actual aspect ratio
+        if (m_aspectRatio > 1.0f)
+        {
+            m_orthoSize *= m_aspectRatio;
+        }
+        // m_orthoSize = 4.0f;
+        m_mvp = glm::ortho(-m_orthoSize * m_aspectRatio, m_orthoSize * m_aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
@@ -121,9 +131,9 @@ namespace ige
         shader.Unbind();
 
         Renderer renderer;
-
         FpsCounter fpsCounter;
         InputManager inputManager(m_running);
+
         while (m_running)
         {
             // events
@@ -135,7 +145,7 @@ namespace ige
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
-            ImGui::ShowDemoWindow();
+            // ImGui::ShowDemoWindow();
             ImGui::Begin("Debug Info");
             ImGui::Text("FPS: %.1f", fpsCounter.GetFPS());
             ImGui::Text("Average FPS: %.1f", fpsCounter.GetAverageFPS());

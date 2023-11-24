@@ -22,7 +22,7 @@ namespace ige
         Window m_window;
         SDL_GLContext m_glContext;
         bool m_running;
-        float aspectRatio;
+        float m_aspectRatio;
         glm::mat4 m_mvp;
         GLfloat m_orthoSize;
     };

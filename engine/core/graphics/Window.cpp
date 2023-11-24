@@ -36,12 +36,6 @@ namespace ige
         }
     }
 
-    Window::~Window()
-    {
-        // No need to explicitly destroy the window here; it will be automatically handled by the unique_ptr.
-        // Additional cleanup logic, if needed...
-    }
-
     SDL_Window *Window::GetSDLWindow() const
     {
         return m_window.get();
