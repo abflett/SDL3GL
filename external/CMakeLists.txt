@@ -3,6 +3,7 @@ add_subdirectory(sdl_image)
 add_subdirectory(glad)
 add_subdirectory(imgui)
 add_subdirectory(glm)
+add_subdirectory(entt)
 
 add_library(external INTERFACE)
 
@@ -13,4 +14,5 @@ target_link_libraries(external
     INTERFACE glm::glm
     INTERFACE glad
     INTERFACE imgui
+    INTERFACE EnTT::EnTT
 )
