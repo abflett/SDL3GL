@@ -5,10 +5,11 @@
 class InputManager
 {
 public:
-    InputManager();
-    ~InputManager();
+    InputManager(bool &running);
 
-    void HandleEvents(SDL_Event &event);
+    void HandleEvents();
 
 private:
+    SDL_Event m_event;
+    bool &m_running;
 };

@@ -16,10 +16,6 @@ namespace ige
         Engine();
         ~Engine();
 
-        void Initialize();
-        void Run();
-        void HandleEvents(SDL_Event &event);
-
     private:
         Window m_window;
         SDL_GLContext m_glContext;

@@ -6,6 +6,8 @@
 #include "Shader.hpp"
 #include "Renderer.hpp"
 #include "Texture.hpp"
+#include "InputManager.hpp"
+#include "FpsCounter.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
@@ -109,38 +111,14 @@ namespace ige
 
         Renderer renderer;
 
-        auto startTime = std::chrono::high_resolution_clock::now();
-        std::deque<float> fpsHistory; // Store recent FPS values for averaging
-
-        float highestFPS = 0.0f;
-        float lowestFPS = std::numeric_limits<float>::max(); // Initialize with a large value
-
-        SDL_Event event;
+        FpsCounter fpsCounter;
+        InputManager inputManager(m_running);
         while (m_running)
         {
             // events
-            HandleEvents(event);
+            inputManager.HandleEvents();
 
-            // Calculate FPS information
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-            float fps = 1.0f / deltaTime;
-            fpsHistory.push_front(fps);
-            if (SDL_GetTicks() > 1000)
-            {
-                highestFPS = std::max(highestFPS, fps);
-                lowestFPS = std::min(lowestFPS, fps);
-            }
-            const size_t maxHistorySize = 5000;
-            while (fpsHistory.size() > maxHistorySize)
-            {
-                fpsHistory.pop_back();
-            }
-            float averageFPS = 0.0f;
-            for (float value : fpsHistory)
-                averageFPS += value;
-            averageFPS /= static_cast<float>(fpsHistory.size());
-            startTime = currentTime;
+            fpsCounter.Update();
 
             // Init ImgGui frames?
             ImGui_ImplOpenGL3_NewFrame();
@@ -148,10 +126,10 @@ namespace ige
             ImGui::NewFrame();
             ImGui::ShowDemoWindow();
             ImGui::Begin("Debug Info");
-            ImGui::Text("FPS: %.1f", fps);
-            ImGui::Text("Average FPS: %.1f", averageFPS);
-            ImGui::Text("Highest FPS: %.1f", highestFPS);
-            ImGui::Text("Lowest FPS: %.1f", lowestFPS);
+            ImGui::Text("FPS: %.1f", fpsCounter.GetFPS());
+            ImGui::Text("Average FPS: %.1f", fpsCounter.GetAverageFPS());
+            ImGui::Text("Highest FPS: %.1f", fpsCounter.GetHighestFPS());
+            ImGui::Text("Lowest FPS: %.1f", fpsCounter.GetLowestFPS());
             ImGui::End();
             ImGui::Render();
 
@@ -177,43 +155,5 @@ namespace ige
 
         SDL_GL_DeleteContext(m_glContext);
         SDL_Quit();
-    }
-
-    void Engine::Initialize()
-    {
-    }
-
-    void Engine::Run()
-    {
-    }
-
-    void Engine::HandleEvents(SDL_Event &event)
-    {
-
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                m_running = false;
-            }
-            if (event.type == SDL_EVENT_KEY_DOWN)
-            {
-                auto keysympressed = event.key.keysym.sym;
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    m_running = false;
-                }
-            }
-            if (event.type == SDL_EVENT_WINDOW_RESIZED &&
-                event.window.type == SDL_EVENT_WINDOW_RESIZED)
-            {
-                aspectRatio = static_cast<GLfloat>(event.window.data1) / static_cast<GLfloat>(event.window.data2);
-                std::cout << "Aspect Ration Changed: " << aspectRatio << std::endl;
-
-                GLfloat orthoSizeX = m_orthoSize * aspectRatio;
-                m_mvp = glm::ortho(-orthoSizeX, orthoSizeX, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
-            }
-        }
     }
 }
