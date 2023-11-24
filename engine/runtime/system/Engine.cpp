@@ -139,9 +139,10 @@ namespace ige
             // events
             inputManager.HandleEvents();
 
+            // update
             fpsCounter.Update();
 
-            // Init ImgGui frames?
+            // draw
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL3_NewFrame();
             ImGui::NewFrame();
@@ -153,10 +154,6 @@ namespace ige
             ImGui::Text("Lowest FPS: %.1f", fpsCounter.GetLowestFPS());
             ImGui::End();
             ImGui::Render();
-
-            // update
-
-            // draw
 
             glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
             renderer.Clear();
