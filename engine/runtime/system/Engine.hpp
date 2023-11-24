@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include "Window.hpp"
+
 namespace ige
 {
     class Engine
@@ -14,10 +16,12 @@ namespace ige
         Engine();
         ~Engine();
 
+        void Initialize();
+        void Run();
         void HandleEvents(SDL_Event &event);
 
     private:
-        std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)> m_window;
+        Window m_window;
         SDL_GLContext m_glContext;
         bool m_running;
         float aspectRatio;
