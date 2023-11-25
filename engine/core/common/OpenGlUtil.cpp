@@ -128,4 +128,10 @@ namespace ige
             return 0;
         }
     }
+
+    float OpenGlUtil::CalculateOrthoSize(glm::vec2 windowDimensions, float pixelsPerUnit)
+    {
+        float orthoSize = glm::min(windowDimensions.x, windowDimensions.y) / (2.0f * pixelsPerUnit);
+        return orthoSize;
+    }
 }

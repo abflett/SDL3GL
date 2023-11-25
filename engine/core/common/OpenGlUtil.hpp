@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 namespace ige
 {
@@ -11,7 +12,6 @@ namespace ige
         template <typename T>
         static GLuint GetEnumType();
         static GLuint GetSizeOfEnumType(GLuint type);
-
-    private:
+        static float CalculateOrthoSize(glm::vec2 windowDimensions, float pixelsPerUnit);
     };
 }

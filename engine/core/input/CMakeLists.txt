@@ -4,6 +4,7 @@ add_library(input ${libsrc})
 
 target_link_libraries(input
     PUBLIC external
+    PUBLIC graphics
 )
 
 target_include_directories(input

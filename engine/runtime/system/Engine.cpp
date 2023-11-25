@@ -27,8 +27,6 @@ namespace ige
         : m_window(1200, 600, "SDL3GL Demo"),
           m_running(true)
     {
-        m_aspectRatio = 1200.0f / 600.0f;
-
         m_glContext = SDL_GL_CreateContext(m_window.GetSDLWindow());
         if (!m_glContext)
         {
@@ -85,6 +83,7 @@ namespace ige
         (void)io;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
         ImGui_ImplSDL3_InitForOpenGL(m_window.GetSDLWindow(), m_glContext);
         ImGui_ImplOpenGL3_Init(glsl_version);
         ImGui::StyleColorsDark();
@@ -99,16 +98,26 @@ namespace ige
 
         // Todo: Normalize the projection so pixels are true for setting max and min zoom levels.
         // Set the desired pixel density (64x64 area corresponds to 1 unit)
-        float pixelsPerUnit = 64.0f;
-        // Calculate the orthographic size
-        m_orthoSize = (float)600 / (4 * pixelsPerUnit);
-        // Adjust orthoSize based on the actual aspect ratio
-        if (m_aspectRatio > 1.0f)
+        // float pixelsPerUnit = 64.0f;
+        // // Calculate the orthographic size
+        // m_orthoSize = (float)600 / (4 * pixelsPerUnit);
+        // // Adjust orthoSize based on the actual aspect ratio
+
+        // if (aspectRatio > 1.0f)
+        // {
+        //     m_orthoSize *= aspectRatio;
+        // }
+
+        float aspectRatio = m_window.GetAspectRatio();
+        m_orthoSize = OpenGlUtil::CalculateOrthoSize(m_window.GetDimensions(), 64.0f);
+
+        // Adjust orthoSize based on the aspectRatio
+        if (aspectRatio > 1.0f)
         {
-            m_orthoSize *= m_aspectRatio;
+            m_orthoSize *= aspectRatio;
         }
-        // m_orthoSize = 4.0f;
-        m_mvp = glm::ortho(-m_orthoSize * m_aspectRatio, m_orthoSize * m_aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
+
+        m_mvp = glm::ortho(-m_orthoSize * aspectRatio, m_orthoSize * aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
 
         VertexArray vao;
         VertexBuffer vbo(positions, sizeof(positions));
@@ -132,7 +141,7 @@ namespace ige
 
         Renderer renderer;
         FpsCounter fpsCounter;
-        InputManager inputManager(m_running);
+        InputManager inputManager(m_running, m_window);
 
         while (m_running)
         {
@@ -141,6 +150,16 @@ namespace ige
 
             // update
             fpsCounter.Update();
+            float aspectRatio = m_window.GetAspectRatio();
+            m_orthoSize = OpenGlUtil::CalculateOrthoSize(m_window.GetDimensions(), 64.0f);
+
+            // Adjust orthoSize based on the aspectRatio
+            if (aspectRatio > 1.0f)
+            {
+                m_orthoSize *= aspectRatio;
+            }
+
+            m_mvp = glm::ortho(-m_orthoSize * aspectRatio, m_orthoSize * aspectRatio, -m_orthoSize, m_orthoSize, -1.0f, 200.0f);
 
             // draw
             ImGui_ImplOpenGL3_NewFrame();
