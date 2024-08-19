@@ -42,7 +42,7 @@ namespace ige
         if (!gladLoadGL())
         {
             std::cerr << "Failed to initialize GLAD!" << std::endl;
-            SDL_GL_DeleteContext(m_glContext);
+            SDL_GL_DestroyContext(m_glContext);
             SDL_Quit();
         }
 
@@ -69,7 +69,7 @@ namespace ige
         ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
 
-        SDL_GL_DeleteContext(m_glContext);
+        SDL_GL_DestroyContext(m_glContext);
         SDL_Quit();
     }
 

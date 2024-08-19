@@ -9,13 +9,13 @@ namespace ige
                    &SDL_DestroyWindow),
           m_aspectRatio(static_cast<float>(width) / static_cast<float>(height))
     {
-        if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+        if (SDL_Init(SDL_INIT_VIDEO) < 0)
         {
             std::cerr << "Failed to initialize SDL: " << SDL_GetError()
                       << std::endl;
         }
 
-        SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+        // SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
